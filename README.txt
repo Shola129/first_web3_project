@@ -1,1 +1,5 @@
 A modern Web3 wallet connection application built with JavaScript and Ethers.js that allows users to securely connect their crypto wallets such as MetaMask and Trust Wallet. The project enables wallet authentication, retrieves wallet addresses, displays Ethereum balances in real time, and generates wallet QR codes for easy sharing and transactions. Designed with a clean and responsive interface, the application demonstrates the integration of blockchain technology into web applications using Web3 providers and Ethereum smart wallet interactions.
+
+
+
+
