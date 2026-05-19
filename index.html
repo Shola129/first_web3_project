@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Crypto Wallet Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- <script src="https://cdn.ethers.io/lib/ethers-5.2.esm.min.js"></script> -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script> -->
+    <!--<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.1/dist/ethers.umd.min.js"></script>-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --success: #10b981;
+            --nav-width: 260px;
+            --nav-height: 0px; /* Managed via media queries */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+            flex-direction: row; /* Desktop Default */
+        }
+
+        /* ==========================================
+           NAVIGATION (DESKTOP DEFAULT)
+        ========================================== */
+        nav {
+            width: var(--nav-width);
+            background-color: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 2rem 1rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+        }
+
+        nav .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-bottom: 3rem;
+            padding-left: 1rem;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        nav ul li {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        nav ul li:hover, nav ul li.active {
+            background-color: var(--border-color);
+            color: var(--text-main);
+        }
+
+        nav ul li.active {
+            border-left: 4px solid var(--accent-color);
+        }
+
+        /* ==========================================
+           MAIN LAYOUT (DESKTOP DEFAULT)
+        ========================================== */
+        main {
+            flex: 1;
+            padding: 2.5rem 3rem;
+            margin-left: var(--nav-width); /* Push content past desktop nav */
+            width: calc(100% - var(--nav-width));
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2.5rem;
+            gap: 1rem;
+        }
+
+        header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .btn:hover { background-color: var(--accent-hover); }
+        .btn:disabled {
+            background-color: var(--border-color);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        /* ==========================================
+           VIEWS & CARDS LAYOUT
+        ========================================== */
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* 2 Columns on Desktop */
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            width: 100%;
+        }
+
+        .card h3 {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+
+        .card .value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            word-break: break-all;
+        }
+
+        .address-box {
+            word-break: break-all;
+            font-family: monospace;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            font-size: 0.95rem;
+            background: rgba(0,0,0,0.2);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+        }
+
+        /* Forms */
+        .form-group { margin-bottom: 1.25rem; }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            color: var(--text-main);
+            font-size: 1rem;
+        }
+        .form-group input:focus { outline: none; border-color: var(--accent-color); }
+
+        /* QR Adjustments */
+        #qrcode-container {
+            padding: 1rem;
+            background: white;
+            border-radius: 0.5rem;
+            width: fit-content;
+            margin: 1.5rem 0;
+        }
+
+        .status-msg {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            display: none;
+            word-break: break-all;
+        }
+        .status-msg.success { display: block; background-color: rgba(16, 185, 129, 0.15); color: #34d399; }
+        .status-msg.error { display: block; background-color: rgba(239, 68, 68, 0.15); color: #f87171; }
+
+
+        /* ==========================================
+           TABLET BREAKPOINT (max-width: 1024px)
+        ========================================== */
+        @media (max-width: 1024px) {
+            body { flex-direction: column; }
+            
+            nav {
+                width: 100%;
+                height: 70px;
+                position: fixed;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0 2rem;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            nav .logo { margin-bottom: 0; padding-left: 0; }
+            nav ul { flex-direction: row; gap: 1rem; }
+            nav ul li.active { border-left: none; border-bottom: 3px solid var(--accent-color); border-radius: 0; }
+
+            main {
+                margin-left: 0;
+                margin-top: 70px; /* Account for top navbar */
+                width: 100%;
+                padding: 2rem;
+            }
+        }
+
+        /* ==========================================
+           MOBILE BREAKPOINT (max-width: 640px)
+        ========================================== */
+        @media (max-width: 640px) {
+            nav {
+                top: auto;
+                bottom: 0; /* Move navigation to screen bottom */
+                height: 65px;
+                border-bottom: none;
+                border-top: 1px solid var(--border-color);
+                padding: 0;
+                justify-content: center;
+            }
+
+            nav .logo { display: none; } /* Hide logo to save space */
+            
+            nav ul {
+                width: 100%;
+                height: 100%;
+                gap: 0;
+            }
+
+            nav ul li {
+                flex: 1;
+                text-align: center;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.85rem;
+                border-radius: 0;
+                padding: 0;
+            }
+
+            nav ul li.active {
+                border-bottom: none;
+                border-top: 3px solid var(--accent-color);
+                background-color: rgba(59, 130, 246, 0.05);
+            }
+
+            main {
+                margin-top: 0;
+                margin-bottom: 75px; /* Account for bottom nav bar */
+                padding: 1.25rem;
+            }
+
+            header {
+                flex-direction: column-reverse; /* Put Connect Wallet button at the top cleanly */
+                align-items: stretch;
+                gap: 1rem;
+                margin-bottom: 1.75rem;
+            }
+
+            header h1 { font-size: 1.5rem; }
+            .btn { width: 100%; text-align: center; padding: 0.85rem; }
+
+            .grid-container {
+                grid-template-columns: 1fr; /* Force single column stacked layout */
+                gap: 1rem;
+            }
+            
+            .card { padding: 1.25rem; }
+            .card .value { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Adaptive Navigation Panel -->
+    <nav>
+        <div class="logo">ApexWallet</div>
+        <ul>
+            <li class="nav-item active" data-target="dashboard-view">Dashboard</li>
+            <li class="nav-item" data-target="send-view">Send</li>
+            <li class="nav-item" data-target="qr-view">Receive</li>
+        </ul>
+    </nav>
+
+    <!-- Main Dynamic Application Container -->
+    <main>
+        <header>
+            <h1 id="page-title">Dashboard</h1>
+            <button class="btn" id="connect-btn">Connect Wallet</button>
+        </header>
+
+        <!-- DASHBOARD SECTION -->
+        <section id="dashboard-view" class="view-section active">
+            <div class="grid-container">
+                <div class="card">
+                    <h3>Wallet Balance</h3>
+                    <div class="value" id="balance-display">-.-- ETH</div>
+                </div>
+                <div class="card">
+                    <h3>Network</h3>
+                    <div class="value" id="network-display">Disconnected</div>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Account Address</h3>
+                <div class="address-box" id="account-display">Not connected</div>
+            </div>
+        </section>
+
+        <!-- SEND TRANSACTION SECTION -->
+        <section id="send-view" class="view-section">
+            <div class="card" style="max-width: 600px; margin: 0 auto;">
+                <h3>Transfer Assets</h3>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Send native tokens securely across the active chain.</p>
+                
+                <form id="send-form">
+                    <div class="form-group">
+                        <label for="recipient">Recipient Address</label>
+                        <input type="text" id="recipient" placeholder="0x..." required>
+                    </div>
+                    <div class="form-group">
+                        <label for="amount">Amount (Native Asset)</label>
+                        <input type="number" id="amount" step="any" placeholder="0.00" required>
+                    </div>
+                    <button type="submit" class="btn" id="send-btn" disabled style="width: 100%;">Send Transaction</button>
+                </form>
+                <div id="tx-status" class="status-msg"></div>
+            </div>
+        </section>
+
+        <!-- RECEIVE / QR CODE SECTION -->
+        <section id="qr-view" class="view-section">
+            <div class="card" style="max-width: 500px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; text-align: center;">
+                <h3>Your Public QR Code</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Scan or share this public address string to receive funds.</p>
+                
+                <div id="qr-wrapper" style="display: none; flex-direction: column; align-items: center; width: 100%;">
+                    <div id="qrcode-container"></div>
+                    <div class="address-box" id="wallet-address-display" style="width: 100%;"></div>
+                </div>
+                
+                <p id="qr-placeholder" style="color: var(--text-muted); margin: 3rem 0;">Please connect your wallet to safely generate your verification QR code.</p>
+            </div>
+        </section>
+    </main>
+
+    <script src="ethers.js"></script>
+
+    <script>
+        let provider = null, signer = null, userAddress = null, qrcode = null;
+
+        // --- DOM Elements ---
+        const connectBtn = document.getElementById('connect-btn');
+        const navItems = document.querySelectorAll('.nav-item');
+        const views = document.querySelectorAll('.view-section');
+        const pageTitle = document.getElementById('page-title');
+        const balanceDisplay = document.getElementById('balance-display');
+        const networkDisplay = document.getElementById('network-display');
+        const accountDisplay = document.getElementById('account-display');
+        const sendForm = document.getElementById('send-form');
+        const sendBtn = document.getElementById('send-btn');
+        const txStatus = document.getElementById('tx-status');
+        const qrWrapper = document.getElementById('qr-wrapper');
+        const qrPlaceholder = document.getElementById('qr-placeholder');
+        const walletAddressDisplay = document.getElementById('wallet-address-display');
+
+        // --- Responsive Navigation Handler ---
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                navItems.forEach(i => i.classList.remove('active'));
+                views.forEach(v => v.classList.remove('active'));
+
+                item.classList.add('active');
+                const targetView = item.getAttribute('data-target');
+                document.getElementById(targetView).classList.add('active');
+                pageTitle.textContent = item.textContent;
+                
+                // On small viewports, auto-scroll to top when moving between views
+                if(window.innerWidth <= 1024) window.scrollTo(0,0);
+            });
+        });
+
+        // --- Web3 Interactions ---
+        async function connectWallet() {
+            if (typeof window.ethereum === 'undefined') {
+                alert('No Web3 Provider detected. Please install MetaMask or another compatible crypto extension.');
+                return;
+            }
+            try {
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                // const provider = new ethers.BrowserProvider(window.ethereum);
+                const account =   await provider.send("eth_requestAccounts", []);
+                const signer = await provider.getSigner();
+                const address = await signer.getAddress();
+                userAddress = account[0];
+                connectBtn.textContent = `${userAddress.substring(0, 6)}...${userAddress.substring(userAddress.length - 4)}`;
+                accountDisplay.textContent = userAddress;
+                sendBtn.disabled = false;
+                await generateWalletQR(userAddress);
+                await updateWalletData(provider, address);
+            } catch (error) {
+                console.log(error.message);
+            }
+        }
+
+        async function updateWalletData(provider, userAddress) {
+            if (!provider || !userAddress) return;
+            const balance = await provider.getBalance(userAddress);
+            // console.log(balance);
+            balanceDisplay.textContent = `${parseFloat(balance).toFixed(4)} ETHs`;
+            const network = await provider.getNetwork();
+            networkDisplay.textContent = network.name.toUpperCase() === 'UNKNOWN' ? 'Custom Network' : network.name.toUpperCase();
+        }
+
+
+        function generateWalletQR(address){
+            qrPlaceholder.style.display = 'none';
+            qrWrapper.style.display = 'flex';
+            walletAddressDisplay.textContent = address;
+            document.getElementById('qrcode-container').innerHTML = '';
+            const value =  address;
+            new QRCode(document.getElementById("qrcode-container"),{
+                text:value,
+                width: 200,
+                height: 200,
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        // function generateWalletQR(address) {
+        //     qrPlaceholder.style.display = 'none';
+        //     qrWrapper.style.display = 'flex';
+        //     walletAddressDisplay.textContent = address;
+        //     document.getElementById('qrcode-container').innerHTML = '';
+            
+        //     qrcode = new QRCode(document.getElementById("qrcode-container"), {
+        //         text: address,
+        //         width: 180,
+        //         height: 180,
+        //         colorDark: "#0f172a",
+        //         colorLight: "#ffffff",
+        //         correctLevel: QRCode.CorrectLevel.H
+        //     });
+        // }
+
+        // --- Form Processing ---
+        // sendForm.addEventListener('submit', async (e) => {
+        //     e.preventDefault();
+        //     const recipient = document.getElementById('recipient').value;
+        //     const amount = document.getElementById('amount').value;
+
+        //     try {
+        //         showStatus('Awaiting validation inside provider wallet...', 'success');
+        //         sendBtn.disabled = true;
+
+        //         const tx = await signer.sendTransaction({
+        //             to: recipient,
+        //             value: ethers.parseEther(amount)
+        //         });
+
+        //         showStatus('Transaction broadcasted. Awaiting confirmation block...', 'success');
+        //         await tx.wait();
+                
+        //         showStatus('Transaction confirmed successfully!', 'success');
+        //         sendForm.reset();
+        //         await updateWalletData();
+        //     } catch (error) {
+        //         showStatus(error.reason || error.message || 'Transaction dropped or failed.', 'error');
+        //     } finally {
+        //         sendBtn.disabled = false;
+        //     }
+        // });
+
+        function showStatus(msg, type) {
+            txStatus.textContent = msg;
+            txStatus.className = `status-msg ${type}`;
+        }
+
+        connectBtn.addEventListener('click', connectWallet);
+
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', (accounts) => accounts.length === 0 ? location.reload() : connectWallet());
+            window.ethereum.on('chainChanged', () => location.reload());
+        }
+    </script>
+</body>
+</html>
