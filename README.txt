@@ -2,4 +2,3 @@ A modern Web3 wallet connection application built with JavaScript and Ethers.js 
 
 
 
-
